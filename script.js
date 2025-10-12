@@ -123,7 +123,6 @@ document.addEventListener('DOMContentLoaded', function() {
             e.preventDefault();
 
             // Get form data
-            const formData = new FormData(contactForm);
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const subject = document.getElementById('subject').value;
@@ -140,19 +139,44 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
-            // Simulate form submission
+            // Send data to Google Sheets
             const submitBtn = contactForm.querySelector('button[type="submit"]');
             const originalText = submitBtn.textContent;
 
             submitBtn.textContent = 'Mengirim...';
             submitBtn.disabled = true;
 
-            setTimeout(() => {
-                showNotification('Pesan berhasil dikirim! Terima kasih.', 'success');
-                contactForm.reset();
+            const scriptURL = 'https://script.google.com/macros/s/AKfycbzqM_JUsW6HmT7HFeXVe8IjJk-dNaa0wWLN9a5c4bSI75AqM1MAHykOYGP_a1lFqKdW5g/exec';
+
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: name,
+                    email: email,
+                    subject: subject,
+                    message: message
+                })
+            })
+            .then(response => {
+                if (response.ok || response.type === 'opaque') {
+                    showNotification('Pesan berhasil dikirim! Terima kasih.', 'success');
+                    contactForm.reset();
+                } else {
+                    throw new Error('Network response was not ok');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Terjadi kesalahan saat mengirim pesan. Coba lagi nanti.', 'error');
+            })
+            .finally(() => {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
-            }, 2000);
+            });
         });
     }
 });
